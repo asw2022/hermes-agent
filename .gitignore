@@ -1,0 +1,78 @@
+# ============================================================
+#  Protective .gitignore for the home-directory repo.
+#  Goal: keep secrets and personal bulk data OUT of git history.
+#  Only files you explicitly `git add` will ever be tracked.
+# ============================================================
+
+# --- Secrets / credentials ---
+.env
+.env.*
+*.env
+.gitconfig
+.git-credentials
+.netrc
+.npmrc
+*.pem
+*.key
+id_rsa
+id_*
+ssh/
+.ssh/
+*-token*
+*_token*
+ha_token_file
+ha_token_test.py
+gen_key.py
+gen_ssh_key.py
+secrets.json
+*.secret
+
+# --- Tool / app config that may contain tokens ---
+.claude.json
+.claude/
+.codex/
+.copilot/
+.config/
+.cagent/
+.openclaw/
+.homeassistant/
+.n8n/
+.ollama/
+.lmstudio-home-pointer
+.docker/
+.dotnet/
+.dbus-keyrings/
+.iptv_streamserver/
+.gnutls/
+.git-for-windows-updater
+.agent-browser
+
+# --- Caches / local state ---
+.cache/
+.local/
+.dbus-keyrings/
+.node_repl_history
+.python_history
+.bash_history
+.profile
+
+# --- Bulky personal data ---
+AppData/
+Documents/
+Downloads/
+Desktop/
+Pictures/
+Videos/
+Music/
+.anaconda/
+.conda/
+.android/
+
+# --- Generic junk ---
+node_modules/
+__pycache__/
+*.log
+*.db
+*.sqlite
+.DS_Store
+Thumbs.db
