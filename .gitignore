@@ -76,3 +76,41 @@ __pycache__/
 *.sqlite
 .DS_Store
 Thumbs.db
+
+# ============================================================
+#  Tool-/App-Verzeichnisse (lokaler State, keine Projektdaten)
+# ============================================================
+.hermes/
+.idlerc/
+.ms-ad/
+.qt_material/
+.redhat/
+.stalker_player_data/
+.swt/
+.ubuntupro/
+.VirtualBox/
+.vscode/
+.vscode-shared/
+.yawcam-ai/
+.zenmap/
+IntelGraphicsProfiles/
+IPTV_PLAYER/
+
+# ============================================================
+#  Windows-Junctions / Symlinks auf AppData (NIEMALS committen
+#  -> sonst Rekursion). Das sind KEINE echten Verzeichnisse.
+# ============================================================
+Anwendungsdaten/
+Contacts/
+Cookies/
+Favorites/
+CoPilot/
+
+# ============================================================
+#  Windows-System-Ordner (nur Verknüpfungen/Shell-Daten)
+# ============================================================
+Links/
+Recent/
+Searches/
+SendTo/
+Vorlagen/
