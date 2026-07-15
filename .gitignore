@@ -69,7 +69,7 @@ Music/
 .android/
 
 # --- Generic junk ---
-node_modules/
+node_modules
 __pycache__/
 *.log
 *.db
