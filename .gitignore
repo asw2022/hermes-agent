@@ -106,11 +106,89 @@ Cookies/
 Favorites/
 CoPilot/
 
-# ============================================================
+# ===========================================================
 #  Windows-System-Ordner (nur Verknüpfungen/Shell-Daten)
-# ============================================================
+# ===========================================================
 Links/
 Recent/
 Searches/
 SendTo/
 Vorlagen/
+
+# ===========================================================
+#  Windows-Benutzerprofil-Daten (NIEMALS committen)
+#  Registry-Hives, OneDrive, persoenliche Verzeichnisse,
+#  GnuPG, WSL-Config, Spiele-Saves
+# ===========================================================
+NTUSER.DAT
+NTUSER.DAT*
+*.TM.blf
+*.TMContainer*.regtrans-ms
+USRCLASS.DAT
+OneDrive/
+Saved Games/
+"Eigene Dateien/"
+Startmenü/
+Lokale Einstellungen/
+Eigene Dateien/
+Roaming/
+# Rekursive Windows-Junctions im Profil (zeigen auf AppData -> Endlosschleife!)
+Anwendungsdaten/
+Application Data/
+Local Settings/
+.gnupg/
+.gpg/
+.wslconfig
+Stalker Daten/
+netwatchnet_log.txt
+C:Usersnetwatchnet_log.txt
+*netwatchnet_log.txt
+adb.zip
+tutorial_env/
+
+# ===========================================================
+#  Restliche persoenliche System-Artefakte (Logs, Ini, Reg,
+#  exportierte Env-Vars, OSCam/IPTV-Channel-Lists, Bookmarks)
+# ===========================================================
+ntuser.ini
+Environment Variables
+*.log
+cleanup_log.txt
+netwatch_log.txt
+ipconfig_out.txt
+hermes_desktop_err.txt
+hermes_desktop_out.txt
+uninstall_log.txt
+audio.txt
+advanced_ip_scanner_*.bin
+remove_adobe.reg
+bookmarks*.html
+favorites*.html
+-1.14-windows.xml
+cn.xml
+cn2.xml
+dip.xml
+dip2.xml
+exakt-user-regex-lib.xml
+gn.xml
+iran.xml
+iran2.xml
+tw.xml
+tw2.xml
+ua.xml
+ua2.xml
+ha_oscam_config.yaml
+dashboard-config.json
+filebrowser-settings.json
+oscam_data.html
+
+# ===========================================================
+#  Raus aus dem Repo: venvs + Malware-Quarantäne + Junk
+# ===========================================================
+venv/
+.venv/
+__venv__/
+security/quarantine_2026-07-17/
+security/platform-tools.zip
+security/platform-tools/
+{
