@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASW Smart Home Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00d4ff;
+            font-size: 1.8em;
+        }
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+        }
+        .card h2 {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .card h2 .icon { margin-right: 10px; font-size: 1.3em; }
+        .status {
+            font-size: 0.85em;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .status.online { background: rgba(0,255,100,0.15); color: #00ff64; }
+        .status.offline { background: rgba(255,100,100,0.15); color: #ff6464; }
+        .status.unknown { background: rgba(255,200,0,0.15); color: #ffc800; }
+        
+        /* TV Remote */
+        .remote-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .remote-btn {
+            padding: 12px 8px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(0,255,255,0.1);
+            color: #00d4ff;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .remote-btn:hover { background: rgba(0,255,255,0.25); transform: scale(1.05); }
+        .remote-btn:active { transform: scale(0.95); }
+        .remote-btn.danger { background: rgba(255,50,50,0.15); color: #ff5050; }
+        .remote-btn.success { background: rgba(50,255,50,0.15); color: #50ff50; }
+        .remote-btn span { display: block; font-size: 1.4em; }
+        
+        .full-width { grid-column: span 3; }
+        
+        /* Volume slider */
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .volume-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.1);
+        }
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #00d4ff;
+            cursor: pointer;
+        }
+        #volValue { min-width: 40px; text-align: center; color: #00d4ff; }
+        
+        /* Message input */
+        .message-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 12px;
+        }
+        .message-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+            font-size: 0.95em;
+        }
+        .message-input button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            background: #00d4ff;
+            color: #1a1a2e;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        /* Bouquet list */
+        .bouquet-btn {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 4px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: transparent;
+            color: #e0e0e0;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .bouquet-btn:hover { background: rgba(0,255,255,0.1); }
+        
+        /* Info display */
+        .info-box {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+        .info-box .label { color: #888; }
+        .info-box .value { color: #00d4ff; font-weight: bold; }
+        
+        /* Fire TV */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .app-btn {
+            padding: 10px 5px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,165,0,0.1);
+            color: #ffa500;
+            font-size: 0.8em;
+            cursor: pointer;
+        }
+        .app-btn:hover { background: rgba(255,165,0,0.25); }
+        .app-btn span { font-size: 1.3em; display: block; margin-bottom: 2px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            background: rgba(0,255,200,0.9);
+            color: #1a1a2e;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .toast.show { opacity: 1; }
+        
+        /* Responsive */
+        @media (max-width: 400px) {
+            .dashboard { grid-template-columns: 1fr; }
+            h1 { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+    <h1>🏠 ASW Smart Home</h1>
+    
+    <div class="toast" id="toast"></div>
+    
+    <div class="dashboard">
+        <!-- GigaBlue TV Remote -->
+        <div class="card" style="grid-column: span 2;">
+            <h2><span class="icon">📺</span>GigaBlue UHD TRIO 4K</h2>
+            <div id="gb-status" class="status unknown">Prüfe...</div>
+            
+            <div class="message-input">
+                <input type="text" id="msgText" placeholder="Nachricht auf TV eingeben..." onkeypress="if(event.key==='Enter')sendMsg()">
+                <button onclick="sendMsg()">Senden</button>
+            </div>
+            
+            <div class="remote-grid">
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=1')">⬆️<span>Up</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=4096')">⏺<span>OK</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=116')">⏻<span>Pwr</span></button>
+                
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=108')">⬅️<span>Left</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=105')">☰<span>Menu</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=106')">➡️<span>Right</span></button>
+                
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=358')">⬇️<span>Down</span></button>
+                <button class="remote-btn danger" onclick="gbCmd('/api/remotecontrol?command=103')">✖<span>Exit</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=113')">🔇<span>Mute</span></button>
+            </div>
+            
+            <div class="volume-control">
+                <button class="remote-btn" style="padding:8px 16px" onclick="gbCmd('/api/remotecontrol?command=114')">🔉-</button>
+                <input type="range" class="volume-slider" id="volSlider" min="0" max="100" value="25" oninput="updateVol(this.value)" onchange="SetVol(this.value)">
+                <button class="remote-btn" style="padding:8px 16px" onclick="gbCmd('/api/remotecontrol?command=115')">🔊+</button>
+                <span id="volValue">25</span>
+            </div>
+            
+            <div class="remote-grid" style="margin-top:15px;">
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=403')">◀◀<span>Bouq-</span></button>
+                <button class="remote-btn success" onclick="gbCmd('/api/remotecontrol?command=2')">▲<span>CH+</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=402')">▶▶<span>Bouq+</span></button>
+                
+                <button class="remote-btn danger" onclick="gbCmd('/api/remotecontrol?command=167')">⏺<span>Rec</span></button>
+                <button class="remote-btn success" onclick="gbCmd('/api/remotecontrol?command=3')">▼<span>CH-</span></button>
+                <button class="remote-btn" onclick="gbCmd('/api/remotecontrol?command=168')">⏹<span>Stop</span></button>
+            </div>
+            
+            <div class="info-box" id="gb-info">
+                <div><span class="label">Kanal:</span> <span class="value" id="gb-channel">-</span></div>
+                <div><span class="label">Sendung:</span> <span class="value" id="gb-show">-</span></div>
+                <div><span class="label">Zeit:</span> <span class="value" id="gb-time">-</span></div>
+            </div>
+        </div>
+        
+        <!-- Bouquets -->
+        <div class="card">
+            <h2><span class="icon">📋</span>Bouquets</h2>
+            <div id="bouquet-list" style="max-height:300px;overflow-y:auto;">
+                <div style="color:#888;font-size:0.85em">Lade Bouquets...</div>
+            </div>
+        </div>
+        
+        <!-- Fire TV Stick -->
+        <div class="card" style="grid-column: span 2;">
+            <h2><span class="icon">🔥</span>Fire TV Stick 4K Max</h2>
+            <div id="ft-status" class="status unknown">Nicht verbunden (ADB nötig)</div>
+            
+            <div class="message-input">
+                <input type="text" id="ftSearch" placeholder="App suchen oder URL..." onkeypress="if(event.key==='Enter')ftSearch()">
+                <button onclick="ftSearchApp()">🔍</button>
+            </div>
+            
+            <div class="app-grid">
+                <button class="app-btn" onclick="ftApp('com.amazon.tv.launcher')">🏠<span>Home</span></button>
+                <button class="app-btn" onclick="ftApp('com.netflix.ninja')">🎬<span>Netflix</span></button>
+                <button class="app-btn" onclick="ftApp('com.amazon.avod')">▶<span>Prime</span></button>
+                <button class="app-btn" onclick="ftApp('com.youtube.tv')">📺<span>YouTube</span></button>
+                <button class="app-btn" onclick="ftApp('com.spotify.tv.android')">🎵<span>Spotify</span></button>
+                <button class="app-btn" onclick="ftApp('com.disney.disneyplus')">🏰<span>Disney+</span></button>
+                <button class="app-btn" onclick="ftApp('com.plexapp.android')">📡<span>Plex</span></button>
+                <button class="app-btn" onclick="ftApp('org.xbmc.kodi')">🎞<span>Kodi</span></button>
+            </div>
+            
+            <div class="remote-grid" style="margin-top:15px;">
+                <button class="remote-btn" onclick="ftUp()">⬆️<span>Up</span></button>
+                <button class="remote-btn" onclick="ftSelect()">⏺<span>Select</span></button>
+                <button class="remote-btn" onclick="ftBack()">✖<span>Back</span></button>
+                
+                <button class="remote-btn" onclick="ftLeft()">⬅️<span>Left</span></button>
+                <button class="remote-btn" onclick="ftHome()">🏠<span>Home</span></button>
+                <button class="remote-btn" onclick="ftRight()">➡️<span>Right</span></button>
+                
+                <button class="remote-btn" onclick="ftDown()">⬇️<span>Down</span></button>
+                <button class="remote-btn" onclick="ftPlay()">⏯<span>Play</span></button>
+                <button class="remote-btn" onclick="ftBack()">🔙<span>Back</span></button>
+            </div>
+            
+            <div style="margin-top:12px;text-align:center;">
+                <button class="remote-btn" style="padding:8px 15px;margin:0 4px;" onclick="ftVolUp()">🔊+</button>
+                <button class="remote-btn" style="padding:8px 15px;margin:0 4px;" onclick="ftVolDown()">🔉-</button>
+                <button class="remote-btn" style="padding:8px 15px;margin:0 4px;" onclick="ftMute()">🔇</button>
+                <button class="remote-btn danger" style="padding:8px 15px;margin:0 4px;" onclick="ftSleep()">⏻</button>
+            </div>
+        </div>
+        
+        <!-- System Info -->
+        <div class="card">
+            <h2><span class="icon">💻</span>System</h2>
+            <div class="info-box">
+                <div><span class="label">Hermes:</span> <span class="value">Aktiv ✓</span></div>
+                <div><span class="label">Telegram Bot:</span> <span class="value">Babel2045 ✓</span></div>
+                <div><span class="label">GigaBlue:</span> <span class="value">192.168.0.3 ✓</span></div>
+                <div><span class="label">Fire TV:</span> <span class="value">192.168.0.136</span></div>
+                <div><span class="label">OpenHAB:</span> <span class="value">127.0.0.1:8080</span></div>
+                <div><span class="label">Claude Code:</span> <span class="value">v2.1.158 ✓</span></div>
+                <div><span class="label">HomeAssistant:</span> <span class="value">In Arbeit...</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';  // Same origin - goes through proxy
+        
+        // Toast notification
+        function toast(msg, duration=2000) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), duration);
+        }
+        
+        // GigaBlue command via proxy
+        async function gbCmd(endpoint) {
+            try {
+                const r = await fetch('/api/gb' + endpoint);
+                const data = await r.json();
+                if (data.result === true || data.instandby !== undefined) {
+                    toast('✓ OK');
+                } else {
+                    toast('⚠ ' + (data.message || 'Unbekannt'));
+                }
+                setTimeout(getGBStatus, 500);
+            } catch(e) {
+                toast('✖ Netzwerkfehler');
+                document.getElementById('gb-status').className = 'status offline';
+                document.getElementById('gb-status').textContent = 'Offline';
+            }
+        }
+        
+        // Send message to TV
+        function sendMsg() {
+            const msg = document.getElementById('msgText').value;
+            if (msg.trim()) {
+                gbCmd('/api/message?text=' + encodeURIComponent(msg) + '&type=2&timeout=10');
+                document.getElementById('msgText').value = '';
+            }
+        }
+        
+        // Volume display
+        function updateVol(v) {
+            document.getElementById('volValue').textContent = v;
+        }
+        
+        // Set volume
+        function SetVol(v) {
+            gbCmd('/api/vol?set=set' + v);
+        }
+        
+        // Get status via proxy
+        async function getGBStatus() {
+            try {
+                const r = await fetch('/api/gb/api/statusinfo');
+                const d = await r.json();
+                document.getElementById('gb-status').className = 'status online';
+                document.getElementById('gb-status').textContent = 'Online';
+                document.getElementById('gb-channel').textContent = d.currservice_station || '-';
+                document.getElementById('gb-show').textContent = d.currservice_name || '-';
+                document.getElementById('gb-time').textContent = (d.currservice_begin || '?') + ' - ' + (d.currservice_end || '?');
+                document.getElementById('volSlider').value = d.volume || 25;
+                document.getElementById('volValue').textContent = d.volume || 25;
+            } catch(e) {
+                document.getElementById('gb-status').className = 'status offline';
+                document.getElementById('gb-status').textContent = 'Offline';
+            }
+        }
+        
+        // Load bouquets via proxy
+        async function loadBouquets() {
+            try {
+                const r = await fetch('/api/gb/api/bouquets');
+                const d = await r.json();
+                const container = document.getElementById('bouquet-list');
+                if (d.bouquets && d.bouquets.length > 0) {
+                    container.innerHTML = '';
+                    d.bouquets.forEach(b => {
+                        const btn = document.createElement('button');
+                        btn.className = 'bouquet-btn';
+                        btn.textContent = b[1];
+                        btn.onclick = () => {
+                            fetch('/api/gb/api/getservices?sRef=' + encodeURIComponent(b[0]))
+                                .then(r => r.json())
+                                .then(services => {
+                                    if (services.services && services.services.length > 0) {
+                                        let html = '<div style="max-height:200px;overflow-y:auto;margin-top:5px;">';
+                                        services.services.forEach(s => {
+                                            html += '<button class="bouquet-btn" style="padding:5px 10px;font-size:0.8em;" onclick="gbCmd(\'/api/zap?sRef=\' + encodeURIComponent(s.servicereference))">' + s.servicename + '</button>';
+                                        });
+                                        html += '</div>';
+                                        btn.insertAdjacentHTML('afterend', html);
+                                    }
+                                });
+                        };
+                        container.appendChild(btn);
+                    });
+                }
+            } catch(e) {
+                document.getElementById('bouquet-list').innerHTML = '<div style="color:#ff6464">Nicht erreichbar</div>';
+            }
+        }
+        
+        // Fire TV ADB commands via server proxy
+        function ftCmd(cmd) { fetch('/api/ft/' + cmd); }
+        
+        function ftKey(keycode) { ftCmd('keycode/' + keycode); }
+        function ftApp(pkg) { ftCmd('app/' + pkg); }
+        function ftWake() { ftCmd('wake'); }
+        function ftSleep() { ftKey('26'); }
+        function ftVolUp() { ftCmd('vol/up'); }
+        function ftVolDown() { ftCmd('vol/down'); }
+        function ftMute() { ftKey('164'); }
+        function ftSelect() { ftKey('23'); }
+        function ftBack() { ftKey('4'); }
+        function ftHome() { ftKey('3'); }
+        function ftUp() { ftKey('19'); }
+        function ftDown() { ftKey('20'); }
+        function ftLeft() { ftKey('21'); }
+        function ftRight() { ftKey('22'); }
+        function ftPlay() { ftKey('85'); }
+        
+        function ftSearchApp() {
+            const q = document.getElementById('ftSearch').value;
+            ftCmd('app/com.amazon.vizzini');
+        }
+        
+        // Init
+        getGBStatus();
+        loadBouquets();
+        setInterval(getGBStatus, 30000); // refresh every 30s
+    </script>
+</body>
+</html>

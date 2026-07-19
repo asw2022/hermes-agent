@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head><title>Fire TV Test</title></head>
+<body>
+<h1>Fire TV Keycode Test</h1>
+<p>Klick auf einen Button und prüfe ob die Taste funktioniert:</p>
+
+<div id="log" style="background:#222;color:#0f0;padding:10px;font-family:monospace;height:300px;overflow-y:auto;"></div>
+
+<script>
+const keys = [
+  ['Vol+', 24], ['Vol-', 25], ['Mute', 164],
+  ['Up', 19], ['Down', 20], ['Left', 21], ['Right', 22],
+  ['Select', 23], ['Back', 4], ['Home', 3],
+  ['Play/Pause', 85], ['Power', 26], ['Menu', 82], ['Enter', 66]
+];
+
+const log = document.getElementById('log');
+
+function testKey(name, code) {
+  const t = new Date().toLocaleTimeString();
+  fetch('/api/ft/keycode/' + code)
+    .then(r => r.json())
+    .then(d => {
+      log.innerHTML += t + ' ' + name + ' (' + code + '): ' + JSON.stringify(d) + '<br>';
+      log.scrollTop = log.scrollHeight;
+    })
+    .catch(e => {
+      log.innerHTML += t + ' ' + name + ' FEHLER: ' + e + '<br>';
+      log.scrollTop = log.scrollHeight;
+    });
+}
+
+document.write('<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">');
+keys.forEach(([name, code]) {
+  document.write('<button onclick="testKey(\'' + name + '\',' + code + ')" style="padding:15px;font-size:1.2em;">' + name + '</button>');
+});
+document.write('</div>');
+</script>
+</body>
+</html>
