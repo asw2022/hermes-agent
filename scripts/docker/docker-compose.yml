@@ -1,0 +1,28 @@
+services:
+  gateway:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-gateway
+    restart: unless-stopped
+    ports:
+      - "8642:8642"
+    volumes:
+      - hermes-data:/opt/data
+    command: ["gateway", "run"]
+
+  dashboard:
+    image: nousresearch/hermes-agent:latest
+    container_name: hermes-dashboard
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9119:9119"
+    depends_on:
+      - gateway
+    volumes:
+      - hermes-data:/opt/data
+    environment:
+      - HERMES_DASHBOARD=1
+      - HERMES_DASHBOARD_TUI=1
+    command: ["dashboard", "--host", "127.0.0.1", "--no-open"]
+
+volumes:
+  hermes-data:

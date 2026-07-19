@@ -1,0 +1,1 @@
+TIMEOUT: kein Scan-Ergebnis nach 30 Min

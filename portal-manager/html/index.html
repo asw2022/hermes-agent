@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Portal Statistics</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Portal Statistics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+      }
+      body {
+        margin: 0;
+        background: #101218;
+        color: #f4f6fb;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 1.5rem;
+        padding: 2rem 1rem;
+      }
+      .card {
+        width: min(1400px, 100%);
+        background: #1b1f2a;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .site-header {
+        width: min(1400px, 100%);
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        padding: 0.75rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem 1rem;
+      }
+      .site-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.03em;
+      }
+      .site-title span {
+        color: #9ea5c6;
+        font-weight: 400;
+        margin-left: 0.5rem;
+      }
+      .site-link {
+        color: #80c8ff;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .site-link:hover {
+        text-decoration: underline;
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 1.8rem;
+      }
+      .meta {
+        font-size: 0.95rem;
+        margin-bottom: 1.5rem;
+        color: #b4bad6;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .summary div {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        padding: 1rem;
+      }
+      .summary span {
+        display: block;
+        font-size: 0.85rem;
+        color: #a6accd;
+        margin-bottom: 0.25rem;
+      }
+      .summary strong {
+        font-size: 1.5rem;
+        color: #f8f9ff;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      thead {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      th, td {
+        text-align: left;
+        padding: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      }
+      tbody tr:hover {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .muted {
+        color: #9ea5c6;
+        font-size: 0.85rem;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.25rem 0.85rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 999px;
+        background: rgba(124, 201, 255, 0.12);
+        color: #e4f2ff;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      .pill:hover {
+        background: rgba(124, 201, 255, 0.25);
+      }
+      .actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-bottom: 1.5rem;
+      }
+      .export-links {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+      .export-link,
+      .export-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.03);
+        color: #f4f6fb;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 140ms ease, border 140ms ease;
+      }
+      .export-link:hover,
+      .export-link:focus-visible,
+      .export-button:hover,
+      .export-button:focus-visible {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem 1.25rem;
+        margin-bottom: 1.5rem;
+      }
+      .status-copy {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+      .autorefresh-note {
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7cc9ff;
+      }
+      .refresh-button {
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: transparent;
+        color: #f4f6fb;
+        font-size: 0.85rem;
+        font-weight: 600;
+        padding: 0.45rem 1.25rem;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: background 160ms ease, color 160ms ease;
+      }
+      .refresh-button:hover:not([disabled]) {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .refresh-button[disabled] {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .error {
+        color: #ffb4b4;
+      }
+      .portal-name {
+        font-weight: 600;
+      }
+      .portal-url {
+        color: #9ea5c6;
+        font-size: 0.8rem;
+        word-break: break-all;
+      }
+      .trend-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+      .trend-card {
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem 1.25rem 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .trend-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+      }
+      .trend-header span {
+        font-size: 0.9rem;
+        color: #a6accd;
+      }
+      .trend-header strong {
+        font-size: 1.4rem;
+        color: #f8f9ff;
+      }
+      .sparkline {
+        width: 100%;
+        height: 60px;
+      }
+      .trend-footnote {
+        font-size: 0.85rem;
+        color: #9ea5c6;
+        margin: 0;
+      }
+      .trend-footnote[data-trend="up"] {
+        color: #8af7b8;
+      }
+      .trend-footnote[data-trend="down"] {
+        color: #ffb4c2;
+      }
+      .table-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+      }
+      .filter-input {
+        width: min(320px, 100%);
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(8, 12, 24, 0.35);
+        color: #f4f6fb;
+        padding: 0.45rem 1rem;
+        font-size: 0.9rem;
+        transition: border 140ms ease, background 140ms ease;
+      }
+      .filter-input::placeholder {
+        color: #7e859f;
+      }
+      .filter-input:focus {
+        outline: none;
+        border-color: #7cc9ff;
+        background: rgba(20, 32, 56, 0.6);
+      }
+      .filter-meta {
+        font-size: 0.85rem;
+        color: #9ea5c6;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="site-title">IPTV Stalker Portal Manager v2.22<span>© tem_invictus 2025</span></p>
+      <a class="site-link" href="https://www.digital-eliteboard.com/threads/stalker-portal-manager.538885/" target="_blank" rel="noopener noreferrer">
+        More info: https://www.digital-eliteboard.com/threads/stalker-portal-manager.538885/
+      </a>
+    </header>
+    <main class="card">
+      <h1>Portal Statistics</h1>
+      <div class="actions">
+        <a class="pill" href="/stats/log.html">Proxy Log Monitor</a>
+      </div>
+      <div class="status-row">
+        <p class="meta status-copy">
+          <span class="autorefresh-note">Auto-refresh every 60s</span>
+          <span id="status-message" aria-live="polite">Fetching live data…</span>
+        </p>
+        <button class="refresh-button" type="button" id="refresh-now-btn">Refresh now</button>
+      </div>
+      <section class="summary">
+        <div>
+          <span>Total Portals</span>
+          <strong id="total-portals">--</strong>
+        </div>
+        <div>
+          <span>Total MACs</span>
+          <strong id="total-macs">--</strong>
+        </div>
+        <div>
+          <span>Active MACs</span>
+          <strong id="active-macs">--</strong>
+        </div>
+        <div>
+          <span>Expired MACs</span>
+          <strong id="expired-macs">--</strong>
+        </div>
+        <div>
+          <span>No-Expiry MACs</span>
+          <strong id="noexp-macs">--</strong>
+        </div>
+      </section>
+      <section class="trend-grid" aria-label="7-day trend sparklines">
+        <article class="trend-card">
+          <div class="trend-header">
+            <span>Total MACs (7 days)</span>
+            <strong id="trend-total-macs-value">--</strong>
+          </div>
+          <svg class="sparkline" id="trend-total-macs-spark" viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path fill="none" stroke="#7cc9ff" stroke-width="2" opacity="0.8"></path>
+            <circle r="3" fill="#7cc9ff" opacity="0.9"></circle>
+          </svg>
+          <p class="trend-footnote" id="trend-total-macs-note">Awaiting history…</p>
+        </article>
+        <article class="trend-card">
+          <div class="trend-header">
+            <span>Active Success Rate (7 days)</span>
+            <strong id="trend-success-rate-value">--</strong>
+          </div>
+          <svg class="sparkline" id="trend-success-rate-spark" viewBox="0 0 120 40" preserveAspectRatio="none">
+            <path fill="none" stroke="#9dffa7" stroke-width="2" opacity="0.9"></path>
+            <circle r="3" fill="#9dffa7" opacity="0.9"></circle>
+          </svg>
+          <p class="trend-footnote" id="trend-success-rate-note">Awaiting history…</p>
+        </article>
+      </section>
+      <section>
+        <div class="table-toolbar">
+          <input type="search" class="filter-input" id="portal-filter" placeholder="Filter portals by name or URL" aria-label="Filter portals by name or URL" />
+          <span class="filter-meta" id="filter-meta">Showing all portals</span>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Portal</th>
+              <th>MACs</th>
+              <th>Active</th>
+              <th>Expired</th>
+              <th>No Exp.</th>
+              <th>Req. Delay (s)</th>
+              <th>Check Delay (s)</th>
+              <th>Exports</th>
+              <th>MAC Usage</th>
+            </tr>
+          </thead>
+          <tbody id="portals-body">
+            <tr>
+              <td colspan="9" class="muted">Loading latest snapshot…</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <p class="muted" id="updated-at">Awaiting first refresh…</p>
+      <noscript>
+        <p class="error">JavaScript is disabled. Enable it to load live statistics.</p>
+      </noscript>
+    </main>
+    <script>
+      const statusEl = document.getElementById('status-message');
+      const totalsEls = {
+        portals: document.getElementById('total-portals'),
+        macs: document.getElementById('total-macs'),
+        active: document.getElementById('active-macs'),
+        expired: document.getElementById('expired-macs'),
+        noExp: document.getElementById('noexp-macs')
+      };
+      const tableBody = document.getElementById('portals-body');
+      const updatedAtEl = document.getElementById('updated-at');
+      const refreshButton = document.getElementById('refresh-now-btn');
+      const sparkRefs = {
+        total: {
+          value: document.getElementById('trend-total-macs-value'),
+          note: document.getElementById('trend-total-macs-note'),
+          svg: document.getElementById('trend-total-macs-spark')
+        },
+        success: {
+          value: document.getElementById('trend-success-rate-value'),
+          note: document.getElementById('trend-success-rate-note'),
+          svg: document.getElementById('trend-success-rate-spark')
+        }
+      };
+      const SPARK_STORAGE_KEY = 'portal_stats_trend_history_v1';
+      const SPARK_MAX_POINTS = 7;
+      const numberFormatter = new Intl.NumberFormat();
+      const percentFormatter = new Intl.NumberFormat(undefined, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      let isFetching = false;
+      let latestPortalSnapshot = [];
+      let filteredPortals = [];
+      let filterTerm = '';
+
+      function renderTotals(data) {
+        totalsEls.portals.textContent = numberFormatter.format(data?.totals?.portals ?? 0);
+        totalsEls.macs.textContent = numberFormatter.format(data?.totals?.macs ?? 0);
+        totalsEls.active.textContent = numberFormatter.format(data?.totals?.active_macs ?? 0);
+        totalsEls.expired.textContent = numberFormatter.format(data?.totals?.expired_macs ?? 0);
+        totalsEls.noExp.textContent = numberFormatter.format(data?.totals?.no_expiration_macs ?? 0);
+      }
+
+      function escapeHTML(str = '') {
+        return String(str).replace(/[&<>"']/g, (char) => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[char] || char));
+      }
+
+      function applyFilter(portals = [], term = '') {
+        if (!term) {
+          return portals;
+        }
+        const normalized = term.trim().toLowerCase();
+        if (!normalized) {
+          return portals;
+        }
+        return portals.filter((portal) => {
+          const name = (portal?.name ?? '').toLowerCase();
+          const url = (portal?.url ?? '').toLowerCase();
+          return name.includes(normalized) || url.includes(normalized);
+        });
+      }
+
+      function renderPortals(portals = []) {
+        latestPortalSnapshot = Array.isArray(portals) ? portals.slice() : [];
+        filteredPortals = applyFilter(latestPortalSnapshot, filterTerm);
+        const dataset = filteredPortals;
+        const filterMeta = document.getElementById('filter-meta');
+        if (!Array.isArray(latestPortalSnapshot) || latestPortalSnapshot.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="9" class="muted">No portal data available.</td></tr>';
+          if (filterMeta) {
+            filterMeta.textContent = 'No portals available';
+          }
+          return;
+        }
+        if (!dataset.length) {
+          tableBody.innerHTML = '<tr><td colspan="9" class="muted">No portals match your filter.</td></tr>';
+          if (filterMeta) {
+            filterMeta.textContent = `0 of ${latestPortalSnapshot.length} portals shown`;
+          }
+          return;
+        }
+        if (filterMeta) {
+          filterMeta.textContent = dataset.length === latestPortalSnapshot.length
+            ? `Showing all ${dataset.length} portals`
+            : `${dataset.length} of ${latestPortalSnapshot.length} portals shown`;
+        }
+        tableBody.innerHTML = dataset.map((portal) => {
+          const portalName = portal?.name ?? 'Unknown';
+          const portalUrl = portal?.url ?? '';
+          const urlLine = portalUrl ? `<br><span class="portal-url">${escapeHTML(portalUrl)}</span>` : '';
+          const usageLink = `<a class="pill" href="/stats/portal.html?portal=${encodeURIComponent(portalName)}">View</a>`;
+          const safeSegment = encodeURIComponent(portalName);
+          const proxyHref = `/${safeSegment}/proxy_${safeSegment}.m3u`;
+          const exportsCell = `
+            <div class="export-links">
+              <a class="export-link" href="${proxyHref}" download>Proxy</a>
+              <button class="export-button csv-export-button" type="button" data-portal="${escapeHTML(portalName)}">CSV</button>
+            </div>`;
+          return `
+            <tr>
+              <td><span class="portal-name">${escapeHTML(portalName)}</span>${urlLine}</td>
+              <td>${numberFormatter.format(portal?.macs ?? 0)}</td>
+              <td>${numberFormatter.format(portal?.active ?? 0)}</td>
+              <td>${numberFormatter.format(portal?.expired ?? 0)}</td>
+              <td>${numberFormatter.format(portal?.no_expiration ?? 0)}</td>
+              <td>${portal?.request_delay ?? '0'}</td>
+              <td>${portal?.check_delay ?? '0'}</td>
+              <td>${exportsCell}</td>
+              <td>${usageLink}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      function setStatus(message, isError = false) {
+        statusEl.textContent = message;
+        statusEl.classList.toggle('error', Boolean(isError));
+      }
+
+      function escapeCsvValue(value) {
+        const stringValue = String(value ?? '');
+        if (/["]|,|\n/.test(stringValue)) {
+          return '"' + stringValue.replace(/"/g, '""') + '"';
+        }
+        return stringValue;
+      }
+
+      function downloadPortalCsv(portal) {
+        if (!portal) {
+          return;
+        }
+        const headers = ['Portal', 'URL', 'MACs', 'Active', 'Inactive', 'Unknown', 'Expired', 'No Expiration', 'Request Delay (s)', 'Check Delay (s)'];
+        const row = [
+          portal?.name ?? '',
+          portal?.url ?? '',
+          portal?.macs ?? 0,
+          portal?.active ?? 0,
+          portal?.inactive ?? 0,
+          portal?.unknown ?? 0,
+          portal?.expired ?? 0,
+          portal?.no_expiration ?? 0,
+          portal?.request_delay ?? 0,
+          portal?.check_delay ?? 0
+        ];
+        const csv = [headers.map(escapeCsvValue).join(','), row.map(escapeCsvValue).join(',')].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const downloader = document.createElement('a');
+        const filename = `${portal?.name ?? 'portal'}_summary.csv`;
+        downloader.href = URL.createObjectURL(blob);
+        downloader.download = filename.replace(/\s+/g, '_');
+        document.body.appendChild(downloader);
+        downloader.click();
+        downloader.remove();
+        setTimeout(() => URL.revokeObjectURL(downloader.href), 0);
+      }
+
+      function setRefreshButtonState(isBusy) {
+        if (!refreshButton) {
+          return;
+        }
+        refreshButton.disabled = isBusy;
+        refreshButton.textContent = isBusy ? 'Refreshing…' : 'Refresh now';
+        refreshButton.setAttribute('aria-busy', String(isBusy));
+      }
+
+      function safeLoadTrendHistory() {
+        try {
+          const raw = localStorage.getItem(SPARK_STORAGE_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          console.warn('Unable to read trend history', error);
+          return [];
+        }
+      }
+
+      function persistTrendHistory(totalMacs, successRate) {
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const history = safeLoadTrendHistory().filter((entry) => entry?.day && typeof entry.day === 'string');
+        const nextPoint = { day: todayKey, totalMacs, successRate };
+        const existingIdx = history.findIndex((entry) => entry.day === todayKey);
+        if (existingIdx >= 0) {
+          history[existingIdx] = nextPoint;
+        } else {
+          history.push(nextPoint);
+        }
+        history.sort((a, b) => a.day.localeCompare(b.day));
+        const trimmed = history.slice(-SPARK_MAX_POINTS);
+        try {
+          localStorage.setItem(SPARK_STORAGE_KEY, JSON.stringify(trimmed));
+        } catch (error) {
+          console.warn('Unable to persist trend history', error);
+        }
+        return trimmed;
+      }
+
+      function renderSparkline(values = [], svgElement, color = '#7cc9ff') {
+        if (!svgElement) {
+          return;
+        }
+        const pathEl = svgElement.querySelector('path');
+        const dotEl = svgElement.querySelector('circle');
+        if (!pathEl || !dotEl || !values.length) {
+          if (pathEl) {
+            pathEl.setAttribute('d', '');
+          }
+          if (dotEl) {
+            dotEl.setAttribute('cx', '0');
+            dotEl.setAttribute('cy', '0');
+            dotEl.setAttribute('style', 'display:none');
+          }
+          return;
+        }
+        pathEl.setAttribute('stroke', color);
+        dotEl.setAttribute('fill', color);
+        const w = 120;
+        const h = 40;
+        const max = Math.max(...values);
+        const min = Math.min(...values);
+        const range = max - min || 1;
+        const step = values.length > 1 ? w / (values.length - 1) : 0;
+        const points = values.map((value, index) => {
+          const x = index * step;
+          const y = h - ((value - min) / range) * h;
+          return [x, y];
+        });
+        const d = points.map(([x, y], idx) => `${idx === 0 ? 'M' : 'L'}${x.toFixed(2)} ${y.toFixed(2)}`).join(' ');
+        pathEl.setAttribute('d', d);
+        const [lastX, lastY] = points[points.length - 1];
+        dotEl.setAttribute('cx', lastX.toFixed(2));
+        dotEl.setAttribute('cy', lastY.toFixed(2));
+        dotEl.removeAttribute('style');
+      }
+
+      function renderTrendNotes(history = []) {
+        const latest = history[history.length - 1];
+        if (!latest) {
+          sparkRefs.total.value.textContent = '--';
+          sparkRefs.total.note.textContent = 'Awaiting history…';
+          sparkRefs.total.note.dataset.trend = 'flat';
+          sparkRefs.success.value.textContent = '--';
+          sparkRefs.success.note.textContent = 'Awaiting history…';
+          sparkRefs.success.note.dataset.trend = 'flat';
+          renderSparkline([], sparkRefs.total.svg);
+          renderSparkline([], sparkRefs.success.svg);
+          return;
+        }
+        sparkRefs.total.value.textContent = numberFormatter.format(latest.totalMacs ?? 0);
+        sparkRefs.success.value.textContent = percentFormatter.format((latest.successRate ?? 0) / 100);
+        const totalSeries = history.map((entry) => entry.totalMacs ?? 0);
+        const successSeries = history.map((entry) => entry.successRate ?? 0);
+        renderSparkline(totalSeries, sparkRefs.total.svg, '#7cc9ff');
+        renderSparkline(successSeries, sparkRefs.success.svg, '#9dffa7');
+
+        const describeChange = (series, noteEl, { suffix = '', decimals = 0, formatNumber } = {}) => {
+          const delta = series.length > 1 ? series[series.length - 1] - series[0] : 0;
+          const direction = delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat';
+          if (delta === 0) {
+            noteEl.textContent = 'No change vs last week';
+            noteEl.dataset.trend = 'flat';
+            return;
+          }
+          const absDelta = Math.abs(delta);
+          const formattedDelta = typeof formatNumber === 'function'
+            ? formatNumber(absDelta)
+            : absDelta.toFixed(decimals);
+          const human = `${delta > 0 ? '+' : '-'}${formattedDelta}${suffix} vs last week`;
+          noteEl.textContent = human;
+          noteEl.dataset.trend = direction;
+        };
+
+        describeChange(totalSeries, sparkRefs.total.note, {
+          formatNumber: (value) => numberFormatter.format(Math.round(value))
+        });
+        describeChange(successSeries, sparkRefs.success.note, { suffix: ' pts', decimals: 1 });
+      }
+
+      async function fetchStats(isBackground = false) {
+        if (isFetching) {
+          return;
+        }
+        isFetching = true;
+        setRefreshButtonState(true);
+        try {
+          if (!isBackground) {
+            setStatus('Fetching live data…');
+          }
+          const response = await fetch('/stats/data.json', { cache: 'no-store' });
+          if (!response.ok) {
+            throw new Error(`Server responded with ${response.status}`);
+          }
+          const payload = await response.json();
+          renderTotals(payload);
+          renderPortals(payload?.portals);
+          const totalMacs = Number(payload?.totals?.macs ?? 0);
+          const successRate = totalMacs > 0 ? ((payload?.totals?.active_macs ?? 0) / totalMacs) * 100 : 0;
+          const history = persistTrendHistory(totalMacs, successRate);
+          renderTrendNotes(history);
+          const fetchedAt = new Date();
+          const generatedAt = payload?.generated_at ? new Date(payload.generated_at) : null;
+          const generatedLabel = generatedAt ? generatedAt.toLocaleString() : fetchedAt.toLocaleString();
+          const refreshedLabel = fetchedAt.toLocaleTimeString();
+          const descriptiveNote = generatedAt
+            ? `Generated ${generatedLabel} • Refreshed ${refreshedLabel}`
+            : `Refreshed ${generatedLabel}`;
+          updatedAtEl.textContent = descriptiveNote;
+          setStatus('Live data loaded.');
+        } catch (error) {
+          console.error('Failed to load stats', error);
+          setStatus('Failed to load data. Retrying shortly…', true);
+        } finally {
+          isFetching = false;
+          setRefreshButtonState(false);
+        }
+      }
+
+      renderTrendNotes(safeLoadTrendHistory());
+      if (refreshButton) {
+        refreshButton.addEventListener('click', () => fetchStats(false));
+      }
+      tableBody.addEventListener('click', (event) => {
+        const trigger = event.target.closest('.csv-export-button');
+        if (!trigger) {
+          return;
+        }
+        const portalName = trigger.getAttribute('data-portal');
+        if (!portalName) {
+          return;
+        }
+        const portalData = latestPortalSnapshot.find((entry) => entry?.name === portalName);
+        if (!portalData) {
+          setStatus('Unable to locate portal data for CSV export.', true);
+          return;
+        }
+        downloadPortalCsv(portalData);
+      });
+      const filterInput = document.getElementById('portal-filter');
+      if (filterInput) {
+        filterInput.addEventListener('input', (event) => {
+          filterTerm = (event.target.value ?? '').toString();
+          renderPortals(latestPortalSnapshot);
+        });
+      }
+      fetchStats(false);
+      setInterval(() => fetchStats(true), 60000);
+    </script>
+  </body>
+  </html>

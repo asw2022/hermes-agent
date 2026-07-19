@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Portal MAC Usage</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+    }
+    body {
+      margin: 0;
+      background: #101218;
+      color: #f4f6fb;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1.5rem;
+      padding: 2rem 1rem;
+    }
+    .card {
+      width: min(1400px, 100%);
+      background: #1b1f2a;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      padding: 2rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .site-header {
+      width: min(1400px, 100%);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+    }
+    .site-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .site-title span {
+      color: #9ea5c6;
+      font-weight: 400;
+      margin-left: 0.5rem;
+    }
+    .site-link {
+      color: #80c8ff;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .site-link:hover {
+      text-decoration: underline;
+    }
+    main header {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.9rem;
+    }
+    .actions {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.35rem 1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      text-decoration: none;
+      color: #eaf4ff;
+      background: rgba(124, 201, 255, 0.12);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .pill:hover {
+      background: rgba(124, 201, 255, 0.25);
+    }
+    button.pill {
+      background: rgba(132, 255, 210, 0.14);
+      border-color: rgba(132, 255, 210, 0.4);
+    }
+    button.pill:hover {
+      background: rgba(132, 255, 210, 0.28);
+    }
+    .meta {
+      color: #b4bad6;
+      margin: 1rem 0 1.5rem;
+    }
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .summary div {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .summary span {
+      display: block;
+      font-size: 0.85rem;
+      color: #a6accd;
+      margin-bottom: 0.35rem;
+    }
+    .summary strong {
+      font-size: 1.4rem;
+      color: #f8f9ff;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
+    thead {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    th, td {
+      padding: 0.75rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .muted {
+      color: #9ea5c6;
+      font-size: 0.9rem;
+    }
+    .error {
+      color: #ffb4b4;
+    }
+    .success-rate-high {
+      color: #79f2c0;
+      font-weight: 600;
+    }
+    .success-rate-low {
+      color: #ffb77c;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="site-header" role="banner">
+    <p class="site-title">IPTV Stalker Portal Manager v2.22<span>© tem_invictus 2025</span></p>
+    <a class="site-link" href="https://www.digital-eliteboard.com/threads/stalker-portal-manager.538885/" target="_blank" rel="noopener noreferrer">
+      More info: https://www.digital-eliteboard.com/threads/stalker-portal-manager.538885/
+    </a>
+  </div>
+  <main class="card">
+    <header>
+      <div>
+        <p class="muted" style="margin:0">Portal MAC Usage</p>
+        <h1 id="portal-title">Loading…</h1>
+      </div>
+      <div class="actions">
+        <a class="pill" href="/stats/">← Back to overview</a>
+        <button class="pill" id="refresh-btn">⟳ Refresh</button>
+      </div>
+    </header>
+    <p class="meta" id="status-message">Fetching MAC usage data…</p>
+    <section class="summary">
+      <div>
+        <span>Tracked MACs</span>
+        <strong id="summary-macs">--</strong>
+      </div>
+      <div>
+        <span>Total Attempts</span>
+        <strong id="summary-attempts">--</strong>
+      </div>
+      <div>
+        <span>Total Successes</span>
+        <strong id="summary-successes">--</strong>
+      </div>
+      <div>
+        <span>Average Success Rate</span>
+        <strong id="summary-rate">--</strong>
+      </div>
+    </section>
+    <section>
+      <table>
+        <thead>
+          <tr>
+            <th>MAC Address</th>
+            <th>Successes</th>
+            <th>Attempts</th>
+            <th>Success Rate</th>
+          </tr>
+        </thead>
+        <tbody id="mac-usage-body">
+          <tr><td colspan="4" class="muted">Loading...</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <p class="muted" id="updated-at">Awaiting first refresh…</p>
+    <noscript>
+      <p class="error">JavaScript is required to display MAC usage statistics.</p>
+    </noscript>
+  </main>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const portalParam = params.get('portal');
+    const statusEl = document.getElementById('status-message');
+    const portalTitle = document.getElementById('portal-title');
+    const summaryEls = {
+      macs: document.getElementById('summary-macs'),
+      attempts: document.getElementById('summary-attempts'),
+      successes: document.getElementById('summary-successes'),
+      rate: document.getElementById('summary-rate')
+    };
+    const tableBody = document.getElementById('mac-usage-body');
+    const updatedAtEl = document.getElementById('updated-at');
+    const numberFormatter = new Intl.NumberFormat();
+    const percentFormatter = new Intl.NumberFormat(undefined, { maximumFractionDigits: 1 });
+
+    if (!portalParam) {
+      statusEl.textContent = 'Missing portal parameter.';
+      statusEl.classList.add('error');
+      portalTitle.textContent = 'Unknown Portal';
+    } else {
+      portalTitle.textContent = portalParam;
+    }
+
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.classList.toggle('error', Boolean(isError));
+    }
+
+    function renderSummary(totals = {}) {
+      summaryEls.macs.textContent = numberFormatter.format(totals.macs ?? 0);
+      summaryEls.attempts.textContent = numberFormatter.format(totals.attempts ?? 0);
+      summaryEls.successes.textContent = numberFormatter.format(totals.successes ?? 0);
+      const ratePercent = (totals.avg_success_rate ?? 0) * 100;
+      summaryEls.rate.textContent = `${percentFormatter.format(ratePercent)}%`;
+    }
+
+    function rateClass(rate) {
+      if (rate >= 0.8) return 'success-rate-high';
+      if (rate <= 0.2) return 'success-rate-low';
+      return '';
+    }
+
+    function renderTable(rows = []) {
+      if (!Array.isArray(rows) || rows.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="muted">No MAC usage data available yet.</td></tr>';
+        return;
+      }
+      tableBody.innerHTML = rows.map((row) => {
+        const mac = row?.mac ?? 'Unknown';
+        const success = numberFormatter.format(row?.success ?? 0);
+        const attempts = numberFormatter.format(row?.attempts ?? 0);
+        const rate = (row?.success_rate ?? 0) * 100;
+        const rateClassName = rateClass(row?.success_rate ?? 0);
+        return `
+          <tr>
+            <td>${mac}</td>
+            <td>${success}</td>
+            <td>${attempts}</td>
+            <td class="${rateClassName}">${percentFormatter.format(rate)}%</td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function fetchPortalData(isBackground = false) {
+      if (!portalParam) {
+        return;
+      }
+      try {
+        if (!isBackground) {
+          setStatus('Fetching MAC usage data…');
+        }
+        const response = await fetch(`/stats/data.json?portal=${encodeURIComponent(portalParam)}`, { cache: 'no-store' });
+        if (!response.ok) {
+          throw new Error(`Server responded with ${response.status}`);
+        }
+        const payload = await response.json();
+        renderSummary(payload?.totals);
+        renderTable(payload?.mac_usage);
+        const stamp = new Date();
+        updatedAtEl.textContent = `Updated ${stamp.toLocaleString()}`;
+        setStatus('MAC usage data loaded.');
+      } catch (error) {
+        console.error('Failed to load portal stats', error);
+        setStatus('Failed to load data. Please retry.', true);
+      }
+    }
+
+    document.getElementById('refresh-btn').addEventListener('click', () => fetchPortalData(false));
+    fetchPortalData(false);
+    setInterval(() => fetchPortalData(true), 60000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+version: "3"
+services:
+  jupyter:
+    image: docker.io/jupyter/scipy-notebook:latest
+    container_name: jupyter
+    ports:
+      - "8888:8888"
+    command: >
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser
+      --ServerApp.token='' --ServerApp.password=''
+      --ServerApp.allow_origin='*'
+    volumes:
+      - /home/Babel:/home/Babel
+    restart: unless-stopped
+
+  grafana:
+    image: docker.io/grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+
+  filebrowser:
+    image: docker.io/filebrowser/filebrowser:latest
+    container_name: filebrowser
+    ports:
+      - "8081:8080"
+    volumes:
+      - /home/Babel/share:/srv
+      - fb-data:/database
+    user: "1000:1000"
+    restart: unless-stopped
+
+volumes:
+  grafana-data:
+  fb-data:
