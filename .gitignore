@@ -192,3 +192,10 @@ security/quarantine_2026-07-17/
 security/platform-tools.zip
 security/platform-tools/
 {
+# ===========================================================
+#  Eingebettete Git-Repos -> nicht in Home-Repo committen
+#  (spaeter ggf. als Submodule einbinden)
+# ===========================================================
+hermes-agent-desktop/
+personal-os/
+src/warp-agent-run-ambient/
