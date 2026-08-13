@@ -6,7 +6,8 @@
 - Präferenzen: curated subsets statt Bulk, echte Verifikation, ASW-Footer auf Deliverables.
 
 ## Konventionen
-- Deliverables/Scripts/Logs → G:\ (z.B. G:\Temp). System-Cleanup auf C: ausgenommen.
+- Deliverables/Scripts/Logs → G:\ (z.B. G:\Temp).
+- Dateien für den User grundsätzlich nach G:\Download, wenn nicht explizit anders gewünscht.
 - ASW-Attribution nur in Files, nie im Chat.
 
 ## Workspace

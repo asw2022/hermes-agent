@@ -191,7 +191,7 @@ __venv__/
 security/quarantine_2026-07-17/
 security/platform-tools.zip
 security/platform-tools/
-{
+
 # ===========================================================
 #  Eingebettete Git-Repos -> nicht in Home-Repo committen
 #  (spaeter ggf. als Submodule einbinden)
@@ -199,3 +199,46 @@ security/platform-tools/
 hermes-agent-desktop/
 personal-os/
 src/warp-agent-run-ambient/
+
+# ===========================================================
+#  Lokale Projektdaten/Artefakte -> nicht committen
+# ===========================================================
+.codebuddy/
+.gemini/
+.gradle/
+.graphify/
+.kilo/
+.opencode/
+ASW-Projekt_backup_202607200207/
+Mark-L/
+docs/
+graphify-out/
+qc
+build_news_summary.py
+build_summary.py
+build_summary2.py
+categorize_final.py
+categorize_news.py
+categorize_news2.py
+categorized_news.json
+check_autostart.py
+curate_news.py
+curated_news.json
+debug_match.py
+debug_match2.py
+final_curated.json
+final_curated2.json
+guardian.rss
+heise.rdf
+heise.rss
+hermes-agent.atom
+hermes_agent.atom
+list_all_items.py
+manual_curate.py
+manual_curate2.py
+news_summary.py
+parse_news.py
+parsed_feeds.json
+spiegel.rss
+src/
+systemcheck.ps1
