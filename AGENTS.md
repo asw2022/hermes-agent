@@ -50,6 +50,44 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - When you make a mistake → document it so future-you doesn't repeat it
 - **Text > Brain** 📝
 
+## Context Engineering (vor jedem wichtigen Auftrag)
+- **6 Felder:** Ziel → Evidenz → Regeln → Aktueller Stand → Grenzen → Abnahme
+- **5 Operationen:** Auswählen, Verdichten, Ordnen, Aktualisieren, Begrenzen
+- Besser: weniger Kontext, aber passender. Kein "mehr Kontext = besser".
+- Detail: skill `hermes-context-check`
+
+## Agenten-Kette (aus OPTI-Video, 07.09.2026)
+- 3-Staffel: Recherche → Aufbau → Abschluss
+- Traces: wer, was, wann — nachvollziehbar
+- Quality Gates: Eingriffsgrenzen pro Stufe
+- Detail: skill `hermes-agent-chain`
+
+## Bot Mode (aus Wanderloots Video, 11.09.2026)
+- Coordinator verteilt an Sub-Bots, sammelt Ergebnisse
+- Forschungs-Flow: Quellen → Lesen → Verknüpfen → Synthesieren → Ablage
+- Quality Check: aktuell? stimmig? was fehlt?
+- Detail: skills `hermes-coordinator`, `hermes-research-skill`
+
+## RAG / Two-Path (aus Arnie Video, 07.09.2026)
+- Wiki = schneller Zugriff (Skills)
+- RAG = tiefe Suche (Vektor + Chunking, lokal Ollama)
+- Nie alles in Kontext → nur relevante Chunks
+- Detail: skill `hermes-rag`
+
+## Context Rot (aus Julian Ivanov Video, 21.08.2026)
+- Nach ~200K Tokens sinkt Qualität
+- Lösung: spezialisierte Agenten, eigener Kontext
+- Coordinator verteilt, belastet nicht alle
+- Detail: skill `hermes-context-rot`
+
+## Bot Mode (aus Ismajl Pukaj Video, 21.08.2026)
+- Mehrere spezialisierte Bots, je Modell + Skills
+- Workflow Chain: SEO → Funnel → Feedback → Umsetzung
+- Model-Zuordnung: Code→GPT 5.6 Soul, Text→Sonnet 5, Frontend→Kimi K3, Recherche→GPT 5.6 Luna
+- Hermes lokal kostenlos vs Crocboard Cloud 120-300€
+- Kosten: Hermes = Eigenhardware + Pay-per-token, keine Fixgebühr
+- Detail: skill `hermes-bot-setup`
+
 ## Red Lines
 
 - Don't exfiltrate private data. Ever.

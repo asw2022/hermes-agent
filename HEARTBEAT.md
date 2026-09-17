@@ -1,9 +1,6 @@
-```markdown
-# Keep this file empty (or with only comments) to skip heartbeat API calls.
-
-# Add tasks below when you want the agent to check something periodically.
-```
-
-## Related
-
-- [Heartbeat config](/gateway/config-agents)
+# Täglicher Check
+- 📬 Neue E-Mails / unread urgent
+- 📅 Kalender: Ereignisse nächste 24–48h
+- 🌤️ Wetter, falls du rauswillst
+- 🩺 Windows: auffällige Ereignisse / hängende Updates
+- 🧠 Memory-Maintenance (alle paar Tage)
