@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#00d4ff">
+<title>GPS Simulation — Explained by Claude</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a1a; color: #e0e0e0; font-family: 'Segoe UI', monospace; overflow: hidden; }
+  canvas { display: block; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  
+  #info {
+    position: absolute; top: 20px; left: 20px;
+    background: rgba(10,10,30,0.9); padding: 20px; border-radius: 12px;
+    border: 1px solid #333; max-width: 400px; font-size: 14px;
+    backdrop-filter: blur(10px);
+  }
+  #info h1 { font-size: 22px; margin-bottom: 10px; color: #00d4ff; }
+  #info p { margin: 6px 0; line-height: 1.5; }
+  #info .highlight { color: #ffd700; font-weight: bold; }
+  
+  /* Satellite Photo Panel */
+  #sat-photo {
+    position: absolute; top: 200px; left: 20px;
+    background: rgba(10,10,30,0.95); padding: 15px; border-radius: 12px;
+    border: 1px solid #00d4ff; display: none; font-size: 13px;
+    min-width: 300px; max-width: 400px;
+  }
+  #sat-photo canvas {
+    width: 100%; border-radius: 8px; margin: 8px 0;
+    border: 1px solid #333;
+    background: #0a0a1a;
+  }
+  #sat-photo h3 { color: #00d4ff; margin-bottom: 8px; }
+  #sat-photo .desc { color: #aaa; font-size: 12px; line-height: 1.5; }
+  
+  /* Satellite System Legend */
+  #legend {
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(10,10,30,0.9); padding: 15px 20px; border-radius: 12px;
+    border: 1px solid #333; font-size: 13px;
+  }
+  #legend h3 { color: #00d4ff; margin-bottom: 10px; }
+  #legend .item { display: flex; align-items: center; margin: 5px 0; }
+  #legend .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; }
+  
+  /* Satellite Table */
+  #sat-table {
+    position: absolute; bottom: 80px; left: 20px;
+    background: rgba(10,10,30,0.95); padding: 15px; border-radius: 12px;
+    border: 1px solid #333; font-size: 12px; display: none;
+    max-height: 300px; overflow-y: auto; min-width: 500px;
+  }
+  #sat-table table { width: 100%; border-collapse: collapse; }
+  #sat-table th { color: #00d4ff; text-align: left; padding: 4px 8px; border-bottom: 1px solid #333; }
+  #sat-table td { padding: 4px 8px; color: #e0e0e0; }
+  #sat-table tr:hover { background: rgba(0, 212, 255, 0.1); }
+  #sat-table .used { color: #ffd700; }
+  
+  #controls {
+    position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(10,10,30,0.9); padding: 15px 25px; border-radius: 12px;
+    border: 1px solid #333; display: flex; gap: 15px; align-items: center;
+  }
+  #controls button {
+    background: #1a1a3a; color: #e0e0e0; border: 1px solid #555;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px;
+    transition: all 0.2s;
+  }
+  #controls button:hover { background: #2a2a5a; border-color: #00d4ff; }
+  #controls button.active { background: #00d4ff; color: #000; }
+  
+  #stats {
+    position: absolute; top: 20px; right: 20px;
+    background: rgba(10,10,30,0.9); padding: 15px 20px; border-radius: 12px;
+    border: 1px solid #333; font-size: 13px;
+  }
+  #stats div { margin: 4px 0; }
+  #stats .label { color: #888; }
+  #stats .value { color: #00ff88; font-weight: bold; }
+  
+  #satellite-info {
+    position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
+    background: rgba(10,10,30,0.95); padding: 15px 20px; border-radius: 12px;
+    border: 1px solid #00d4ff; display: none; font-size: 13px; min-width: 250px;
+  }
+  #satellite-info h3 { color: #00d4ff; margin-bottom: 10px; }
+  #satellite-info .row { display: flex; justify-content: space-between; margin: 4px 0; }
+  #satellite-info .val { color: #ffd700; }
+  
+  #trilateration {
+    position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(10,10,30,0.9); padding: 10px 20px; border-radius: 12px;
+    border: 1px solid #333; font-size: 13px; display: none;
+  }
+  #trilateration .circle { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin: 0 5px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<div id="info">
+  <h1>🛰️ GPS Simulation</h1>
+  <p>Claude Opus 5.5 — Interactive GPS explained</p>
+  <p><span class="highlight">4 Satellites</span> → <span class="highlight">4 Distances</span> → <span class="highlight">1 Position</span></p>
+  <p>Each satellite broadcasts atomic clock time. Your phone solves for location AND time offset.</p>
+  <p style="margin-top:10px; color:#888">🖱️ Drag to rotate | Scroll to zoom | Click satellite for info</p>
+</div>
+
+<div id="stats">
+  <div><span class="label">Satellites:</span> <span class="value" id="sat-count">0</span></div>
+  <div><span class="label">Visible:</span> <span class="value" id="visible-count">0</span></div>
+  <div><span class="label">Phone Pos:</span> <span class="value" id="phone-pos">---</span></div>
+  <div><span class="label">Accuracy:</span> <span class="value" id="accuracy">---</span></div>
+  <div><span class="label">Time Offset:</span> <span class="value" id="time-offset">---</span></div>
+</div>
+
+<div id="satellite-info">
+  <h3 id="sat-name">Satellite</h3>
+  <div class="row"><span>PRN:</span> <span class="val" id="sat-prn">---</span></div>
+  <div class="row"><span>Altitude:</span> <span class="val" id="sat-alt">---</span></div>
+  <div class="row"><span>Speed:</span> <span class="val" id="sat-speed">---</span></div>
+  <div class="row"><span>Signal:</span> <span class="val" id="sat-signal">---</span></div>
+  <div class="row"><span>Distance:</span> <span class="val" id="sat-dist">---</span></div>
+</div>
+
+<!-- Satellite Photo Panel -->
+<div id="sat-photo">
+  <h3 id="photo-title">Satellite Photo</h3>
+  <canvas id="photo-img" width="280" height="180"></canvas>
+  <div class="desc" id="photo-desc"></div>
+</div>
+
+<!-- Satellite System Legend -->
+<div id="legend">
+  <h3>GNSS Systems</h3>
+  <div class="item"><div class="dot" style="background:#ffd700"></div> GPS (USA)</div>
+  <div class="item"><div class="dot" style="background:#ff4444"></div> GLONASS (RU)</div>
+  <div class="item"><div class="dot" style="background:#44ff44"></div> Galileo (EU)</div>
+  <div class="item"><div class="dot" style="background:#4444ff"></div> BeiDou (CN)</div>
+  <div style="margin-top:10px; color:#888; font-size:11px">Click satellite for photo + info</div>
+</div>
+
+<!-- Satellite Table -->
+<div id="sat-table">
+  <h3 style="color:#00d4ff; margin-bottom:10px">All Satellites</h3>
+  <table>
+    <tr><th>PRN</th><th>System</th><th>Orbit</th><th>Inc</th><th>Speed</th><th>Alt</th><th>Used</th></tr>
+  </table>
+</div>
+
+<div id="trilateration">
+  <span>Trilateration:</span>
+  <span class="circle" style="background:#ff4444"></span> SV1
+  <span class="circle" style="background:#44ff44"></span> SV2
+  <span class="circle" style="background:#4444ff"></span> SV3
+  <span class="circle" style="background:#ffff44"></span> SV4
+</div>
+
+<div id="controls">
+  <button id="btn-pause">⏸ Pause</button>
+  <button id="btn-reset">🔄 Reset</button>
+  <button id="btn-signals">📡 Signals</button>
+  <button id="btn-trilateration">🎯 Trilateration</button>
+  <button id="btn-almanac">📋 Almanac</button>
+  <button id="btn-photo">📷 Photo</button>
+  <button id="btn-table">📊 Table</button>
+  <button id="btn-glonass">🛡 GLONASS</button>
+  <button id="btn-galileo">🟢 Galileo</button>
+  <button id="btn-beidou">🔵 BeiDou</button>
+  <button id="btn-nrol">🔴 NRO</button>
+  <button id="btn-strela">🟠 Strela</button>
+  <button id="btn-yaogan">🟣 Yaogan</button>
+  <button id="btn-govsat">🔵 GovSat</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+// === GPS Simulation ===
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// Resize
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// === Constants ===
+const EARTH_RADIUS = 1;
+const GPS_ORBIT = 4.13; // GPS orbit radius (~20,200 km scaled)
+const SPEED_OF_LIGHT = 299792.458; // km/ms (scaled)
+const CLOCK_ERROR = 0.00001; // Nanosecond-level error
+
+// === State ===
+let rotation = { x: 0.3, y: 0.5 };
+let zoom = 1;
+let pan = { x: 0, y: 0 };
+let isDragging = false;
+let lastMouse = { x: 0, y: 0 };
+let paused = false;
+let showSignals = true;
+let showTrilateration = false;
+let showAlmanac = false;
+let time = 0;
+let phonePosition = { x: 0.3, y: 0.2, z: 0.5 }; // Phone location
+let satellites = [];
+let selectedSatellite = null;
+
+// === GPS + GLONASS + Galileo + BeiDou Satellite Data ===
+const GPS_SATELLITES = [
+  { prn: 1,  orbit: 0.0,  inclination: 0.3,  speed: 0.001,  altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 3,  orbit: 1.2,  inclination: -0.5, speed: 0.0012, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 6,  orbit: 2.4,  inclination: 0.7,  speed: 0.0008, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 8,  orbit: 3.6,  inclination: -0.2, speed: 0.0011, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 12, orbit: 0.8,  inclination: 0.9,  speed: 0.0009, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 15, orbit: 2.0,  inclination: -0.6, speed: 0.0013, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 18, orbit: 3.2,  inclination: 0.4,  speed: 0.0010, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 21, orbit: 4.4,  inclination: -0.8, speed: 0.0014, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 24, orbit: 5.6,  inclination: 0.2,  speed: 0.0007, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 27, orbit: 0.4,  inclination: -0.4, speed: 0.0011, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 30, orbit: 1.6,  inclination: 0.6,  speed: 0.0009, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  { prn: 33, orbit: 2.8,  inclination: -0.3, speed: 0.0012, altitude: 4.13, system: 'GPS',    color: '#ffd700' },
+  // GLONASS (Russia)
+  { prn: 101, orbit: 0.5,  inclination: 0.9,  speed: 0.0011, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 105, orbit: 1.7,  inclination: -0.7, speed: 0.0010, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 108, orbit: 2.9,  inclination: 0.5,  speed: 0.0012, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 112, orbit: 4.1,  inclination: -0.3, speed: 0.0009, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 116, orbit: 5.3,  inclination: 0.8,  speed: 0.0013, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 119, orbit: 0.1,  inclination: -0.5, speed: 0.0011, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 123, orbit: 1.3,  inclination: 0.4,  speed: 0.0010, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 126, orbit: 2.5,  inclination: -0.6, speed: 0.0014, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 130, orbit: 3.7,  inclination: 0.2,  speed: 0.0008, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 134, orbit: 4.9,  inclination: -0.8, speed: 0.0012, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 137, orbit: 0.3,  inclination: 0.6,  speed: 0.0011, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  { prn: 141, orbit: 1.5,  inclination: -0.2, speed: 0.0009, altitude: 4.02, system: 'GLONASS', color: '#ff4444' },
+  // Galileo (EU)
+  { prn: 1,  orbit: 0.2,  inclination: 0.5,  speed: 0.0010, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 5,  orbit: 1.4,  inclination: -0.4, speed: 0.0011, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 9,  orbit: 2.6,  inclination: 0.7,  speed: 0.0009, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 13, orbit: 3.8,  inclination: -0.3, speed: 0.0012, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 17, orbit: 5.0,  inclination: 0.6,  speed: 0.0010, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 20, orbit: 0.6,  inclination: -0.7, speed: 0.0013, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 24, orbit: 1.8,  inclination: 0.3,  speed: 0.0011, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 28, orbit: 3.0,  inclination: -0.5, speed: 0.0008, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 32, orbit: 4.2,  inclination: 0.4,  speed: 0.0012, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  { prn: 36, orbit: 5.4,  inclination: -0.6, speed: 0.0010, altitude: 4.24, system: 'GALILEO', color: '#44ff44' },
+  // BeiDou (China)
+  { prn: 1,  orbit: 0.3,  inclination: 0.5,  speed: 0.0009, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  { prn: 5,  orbit: 1.5,  inclination: -0.3, speed: 0.0011, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  { prn: 9,  orbit: 2.7,  inclination: 0.8,  speed: 0.0010, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  { prn: 13, orbit: 3.9,  inclination: -0.4, speed: 0.0012, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  { prn: 17, orbit: 5.1,  inclination: 0.6,  speed: 0.0008, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  { prn: 20, orbit: 0.7,  inclination: -0.5, speed: 0.0013, altitude: 4.18, system: 'BEIDOU',  color: '#4444ff' },
+  // Military/Reconnaissance Satellites
+  { prn: 100, orbit: 0.1,  inclination: 0.7,  speed: 0.0014, altitude: 3.80, system: 'NROL',   color: '#ff0000' },
+  { prn: 101, orbit: 1.3,  inclination: -0.5, speed: 0.0012, altitude: 3.80, system: 'NROL',   color: '#ff0000' },
+  { prn: 102, orbit: 2.5,  inclination: 0.3,  speed: 0.0013, altitude: 3.80, system: 'NROL',   color: '#ff0000' },
+  { prn: 201, orbit: 0.8,  inclination: -0.6, speed: 0.0010, altitude: 3.50, system: 'STRELA', color: '#ff6600' },
+  { prn: 202, orbit: 2.0,  inclination: 0.4,  speed: 0.0011, altitude: 3.50, system: 'STRELA', color: '#ff6600' },
+  { prn: 203, orbit: 3.2,  inclination: -0.7, speed: 0.0009, altitude: 3.50, system: 'STRELA', color: '#ff6600' },
+  { prn: 301, orbit: 0.5,  inclination: 0.6,  speed: 0.0012, altitude: 4.00, system: 'YAOGAN', color: '#ff00ff' },
+  { prn: 302, orbit: 1.7,  inclination: -0.4, speed: 0.0010, altitude: 4.00, system: 'YAOGAN', color: '#ff00ff' },
+  { prn: 303, orbit: 2.9,  inclination: 0.8,  speed: 0.0011, altitude: 4.00, system: 'YAOGAN', color: '#ff00ff' },
+  { prn: 401, orbit: 0.2,  inclination: -0.3, speed: 0.0008, altitude: 5.00, system: 'GOVSAT', color: '#00ffff' },
+  { prn: 402, orbit: 1.4,  inclination: 0.5,  speed: 0.0009, altitude: 5.00, system: 'GOVSAT', color: '#00ffff' },
+];
+
+// Satellite Photo Database (canvas-generated images)
+const SATELLITE_PHOTOS = {
+  GPS: {
+    name: 'GPS III Satellite (USA)',
+    color: '#ffd700',
+    desc: 'GPS III is the latest generation built by Lockheed Martin. 3x accuracy, 8x anti-jamming. Mass: 4,331 kg. Design life: 15 years. First launched Dec 2018.'
+  },
+  GLONASS: {
+    name: 'GLONASS-K2 (Russia)',
+    color: '#ff4444',
+    desc: 'GLONASS-K2 — latest Russian navigation satellite. CDMA signals, improved accuracy. Mass: 1,040 kg. Design life: 10 years. Launched 2022+'
+  },
+  GALILEO: {
+    name: 'Galileo FOC (EU)',
+    color: '#44ff44',
+    desc: 'Galileo — EU global navsat. Fully civilian-controlled. 1m accuracy. Mass: 715 kg. Design life: 15 years. 28 satellites active.'
+  },
+  BEIDOU: {
+    name: 'BeiDou-3 (China)',
+    color: '#4444ff',
+    desc: 'BeiDou-3 — China global navsat. 10cm accuracy. Mass: 2,200 kg. Design life: 12 years. 30 satellites in constellation.'
+  },
+  // Military satellites
+  NROL: {
+    name: 'NROL-85 (USA NRO)',
+    color: '#ff0000',
+    desc: 'NRO — US National Reconnaissance Office. Classified reconnaissance satellite. ELINT/SIGINT. Launch: SpaceX Falcon 9. Orbit: LEO. Classified mission.'
+  },
+  STRELA: {
+    name: 'Strela-3 (Russia)',
+    color: '#ff6600',
+    desc: 'Strela-3 — Russian military communications satellite. LEO constellation. Mass: 225 kg. Design life: 3 years. Military comms.'
+  },
+  YAOGAN: {
+    name: 'Yaogan-39 (China)',
+    color: '#ff00ff',
+    desc: 'Yaogan-39 — Chinese military reconnaissance satellite. SAR/ELINT. Mass: ~2,500 kg. LEO orbit. Class.'
+  },
+  GOVSAT: {
+    name: 'GovSat-1 (EU)',
+    color: '#00ffff',
+    desc: 'GovSat-1 — EU government satellite. X-band/Ka-band military comms. Mass: 4,100 kg. GEO orbit.'
+  }
+};
+function normalize(v) {
+  const len = Math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+  return len > 0 ? { x: v.x/len, y: v.y/len, z: v.z/len } : { x: 0, y: 0, z: 0 };
+}
+
+function cross(a, b) {
+  return {
+    x: a.y*b.z - a.z*b.y,
+    y: a.z*b.x - a.x*b.z,
+    z: a.x*b.y - a.y*b.x
+  };
+}
+
+function dot(a, b) {
+  return a.x*b.x + a.y*b.y + a.z*b.z;
+}
+
+function distance(a, b) {
+  return Math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2);
+}
+
+function rotateX(v, angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return { x: v.x, y: v.y*c - v.z*s, z: v.y*s + v.z*c };
+}
+
+function rotateY(v, angle) {
+  const c = Math.cos(angle), s = Math.sin(angle);
+  return { x: v.x*c + v.z*s, y: v.y, z: -v.x*s + v.z*c };
+}
+
+function project(v) {
+  // Apply rotations
+  let r = rotateX(v, rotation.x);
+  r = rotateY(r, rotation.y);
+  // Perspective
+  const scale = zoom * Math.min(canvas.width, canvas.height) / 5;
+  const x = r.x * scale + canvas.width/2 + pan.x;
+  const y = r.y * scale + canvas.height/2 + pan.y;
+  return { x, y, z: r.z, scale };
+}
+
+// === Satellite Position ===
+function getSatellitePosition(sat, t) {
+  const orbit = sat.orbit + t * sat.speed;
+  const r = sat.altitude;
+  const inc = sat.inclination;
+  
+  // Circular orbit with inclination
+  const x = r * Math.cos(orbit);
+  const y = r * Math.sin(orbit) * Math.cos(inc);
+  const z = r * Math.sin(orbit) * Math.sin(inc);
+  
+  return { x, y, z };
+}
+
+// === Init Satellites ===
+function initSatellites() {
+  satellites = GPS_SATELLITES.map(sat => ({
+    ...sat,
+    pos: getSatellitePosition(sat, 0),
+    signalStrength: Math.random() * 0.3 + 0.7,
+    visible: true,
+    used: false
+  }));
+  
+  // Mark 4 satellites for trilateration
+  satellites.slice(0, 4).forEach(s => s.used = true);
+  
+  document.getElementById('sat-count').textContent = satellites.length;
+}
+
+// === Draw Earth ===
+function drawEarth() {
+  const proj = project({ x: 0, y: 0, z: 0 });
+  const r = EARTH_RADIUS * proj.scale;
+  
+  // Earth sphere (gradient circle)
+  const grad = ctx.createRadialGradient(proj.x, proj.y, r*0.8, proj.x, proj.y, r);
+  grad.addColorStop(0, '#1a3a5a');
+  grad.addColorStop(0.7, '#0a1a2a');
+  grad.addColorStop(1, '#050a15');
+  
+  ctx.beginPath();
+  ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = grad;
+  ctx.fill();
+  
+  // Earth outline
+  ctx.strokeStyle = '#00d4ff';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  
+  // Grid lines (latitude/longitude)
+  ctx.strokeStyle = 'rgba(0, 212, 255, 0.15)';
+  ctx.lineWidth = 0.5;
+  
+  // Latitude lines
+  for (let lat = -60; lat <= 60; lat += 30) {
+    ctx.beginPath();
+    for (let lon = 0; lon <= 360; lon += 5) {
+      const latRad = lat * Math.PI / 180;
+      const lonRad = lon * Math.PI / 180;
+      const x = EARTH_RADIUS * Math.cos(latRad) * Math.sin(lonRad);
+      const y = EARTH_RADIUS * Math.sin(latRad);
+      const z = EARTH_RADIUS * Math.cos(latRad) * Math.cos(lonRad);
+      const p = project({ x, y, z });
+      
+      if (lon === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+  
+  // Longitude lines
+  for (let lon = 0; lon < 360; lon += 30) {
+    ctx.beginPath();
+    for (let lat = -90; lat <= 90; lat += 5) {
+      const latRad = lat * Math.PI / 180;
+      const lonRad = lon * Math.PI / 180;
+      const x = EARTH_RADIUS * Math.cos(latRad) * Math.sin(lonRad);
+      const y = EARTH_RADIUS * Math.sin(latRad);
+      const z = EARTH_RADIUS * Math.cos(latRad) * Math.cos(lonRad);
+      const p = project({ x, y, z });
+      
+      if (lat === -90) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    }
+    ctx.stroke();
+  }
+}
+
+// === Draw Satellites ===
+function drawSatellites() {
+  satellites.forEach(sat => {
+    sat.pos = getSatellitePosition(sat, time);
+    
+    const proj = project(sat.pos);
+    const r = 8 * zoom;
+    
+    // Signal range circle (if visible)
+    if (showSignals && sat.used) {
+      const rangeProj = project({ 
+        x: sat.pos.x * 0.5, 
+        y: sat.pos.y * 0.5, 
+        z: sat.pos.z * 0.5 
+      });
+      const rangeR = distance(sat.pos, { x: 0, y: 0, z: 0 }) * proj.scale * 0.3;
+      
+      ctx.beginPath();
+      ctx.arc(proj.x, proj.y, rangeR, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.2)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+    
+    // Satellite dot
+    ctx.beginPath();
+    ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+    ctx.fillStyle = sat.system === 'GPS' ? '#ffd700' : 
+                    sat.system === 'GLONASS' ? '#ff4444' : 
+                    sat.system === 'GALILEO' ? '#44ff44' : '#4444ff';
+    ctx.fill();
+    
+    // Signal line to Earth
+    if (showSignals) {
+      const earthProj = project({ x: 0, y: 0, z: 0 });
+      ctx.beginPath();
+      ctx.moveTo(proj.x, proj.y);
+      
+      // Signal curve
+      const midX = (proj.x + earthProj.x) / 2;
+      const midY = (proj.y + earthProj.y) / 2 - 20 * zoom;
+      ctx.quadraticCurveTo(midX, midY, earthProj.x, earthProj.y);
+      
+      ctx.strokeStyle = sat.used ? 'rgba(255, 215, 0, 0.5)' : 'rgba(136, 136, 136, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    
+    // PRN label
+    ctx.fillStyle = '#fff';
+    ctx.font = `${10 * zoom}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`SV${sat.prn}`, proj.x, proj.y - r - 5);
+  });
+}
+
+// === Draw Phone ===
+function drawPhone() {
+  const proj = project(phonePosition);
+  const r = 12 * zoom;
+  
+  // Phone icon
+  ctx.beginPath();
+  ctx.arc(proj.x, proj.y, r, 0, Math.PI * 2);
+  ctx.fillStyle = '#00ff88';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  
+  // Label
+  ctx.fillStyle = '#00ff88';
+  ctx.font = `bold ${12 * zoom}px monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText('📱 You', proj.x, proj.y - r - 8);
+}
+
+// === Draw Signals ===
+function drawSignals() {
+  const usedSats = satellites.filter(s => s.used);
+  
+  usedSats.forEach(sat => {
+    const satProj = project(sat.pos);
+    const phoneProj = project(phonePosition);
+    
+    // Animated signal pulse
+    const pulse = (time * 2 + sat.prn) % 1;
+    const x = satProj.x + (phoneProj.x - satProj.x) * pulse;
+    const y = satProj.y + (phoneProj.y - satProj.y) * pulse;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 3 * zoom, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 215, 0, ${1 - pulse})`;
+    ctx.fill();
+  });
+}
+
+// Draw Trilateration ===
+function drawTrilateration() {
+  if (!showTrilateration) return;
+  
+  const usedSats = satellites.filter(s => s.used);
+  if (usedSats.length < 4) return;
+  
+  // Calculate distances for trilateration
+  const ranges = usedSats.map(sat => {
+    const dist = distance(sat.pos, phonePosition);
+    return { dist, prn: sat.prn, pos: sat.pos };
+  });
+  
+  // Draw distance circles from each satellite
+  const colors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44'];
+  usedSats.forEach((sat, i) => {
+    const satProj = project(sat.pos);
+    const dist = distance(sat.pos, phonePosition);
+    const circleR = dist * satProj.scale * 0.5;
+    
+    ctx.beginPath();
+    ctx.arc(satProj.x, satProj.y, circleR, 0, Math.PI * 2);
+    ctx.strokeStyle = colors[i] + '66';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+  
+  // Draw estimated position (phone location)
+  const phoneProj = project(phonePosition);
+  ctx.beginPath();
+  ctx.arc(phoneProj.x, phoneProj.y, 8 * zoom, 0, Math.PI * 2);
+  ctx.fillStyle = '#ff44ff';
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// === Mouse Interaction ===
+canvas.addEventListener('mousedown', (e) => {
+  isDragging = true;
+  lastMouse = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  if (!isDragging) return;
+  
+  const dx = e.clientX - lastMouse.x;
+  const dy = e.clientY - lastMouse.y;
+  
+  rotation.y += dx * 0.01;
+  rotation.x += dy * 0.01;
+  
+  lastMouse = { x: e.clientX, y: e.clientY };
+});
+
+canvas.addEventListener('mouseup', () => { isDragging = false; });
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  zoom *= e.deltaY > 0 ? 0.95 : 1.05;
+  zoom = Math.max(0.3, Math.min(3, zoom));
+});
+
+canvas.addEventListener('click', (e) => {
+  // Check if clicked on a satellite
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  
+  let closest = null;
+  let closestDist = 30;
+  
+  satellites.forEach(sat => {
+    const proj = project(sat.pos);
+    const d = Math.sqrt((proj.x - mouseX)**2 + (proj.y - mouseY)**2);
+    if (d < closestDist) {
+      closestDist = d;
+      closest = sat;
+    }
+  });
+  
+  if (closest) {
+    selectedSatellite = closest;
+    const info = document.getElementById('satellite-info');
+    info.style.display = 'block';
+    document.getElementById('sat-name').textContent = `${closest.system} SV${closest.prn}`;
+    document.getElementById('sat-prn').textContent = closest.prn;
+    document.getElementById('sat-alt').textContent = (closest.altitude * 10000).toFixed(0) + ' km';
+    document.getElementById('sat-speed').textContent = (closest.speed * 1000).toFixed(1) + '°/s';
+    document.getElementById('sat-signal').textContent = (closest.signalStrength * 100).toFixed(0) + '%';
+    document.getElementById('sat-dist').textContent = distance(closest.pos, phonePosition).toFixed(2) + ' units';
+    
+    // Show photo (canvas-generated)
+    const photo = SATELLITE_PHOTOS[closest.system];
+    const photoPanel = document.getElementById('sat-photo');
+    photoPanel.style.display = 'block';
+    document.getElementById('photo-title').textContent = photo.name;
+    document.getElementById('photo-desc').textContent = photo.desc;
+    
+    // Generate satellite silhouette on canvas
+    const imgCanvas = document.getElementById('photo-img');
+    const ctx2 = imgCanvas.getContext('2d');
+    imgCanvas.width = 280;
+    imgCanvas.height = 180;
+    
+    // Background
+    ctx2.fillStyle = '#0a0a1a';
+    ctx2.fillRect(0, 0, 280, 180);
+    
+    // Satellite body
+    ctx2.fillStyle = photo.color;
+    ctx2.fillRect(90, 60, 100, 20);
+    
+    // Solar panels
+    ctx2.fillStyle = photo.color + '88';
+    ctx2.fillRect(20, 50, 60, 40);
+    ctx2.fillRect(200, 50, 60, 40);
+    
+    // Antenna
+    ctx2.strokeStyle = photo.color;
+    ctx2.lineWidth = 2;
+    ctx2.beginPath();
+    ctx2.moveTo(140, 60);
+    ctx2.lineTo(140, 20);
+    ctx2.stroke();
+    ctx2.beginPath();
+    ctx2.arc(140, 20, 5, 0, Math.PI * 2);
+    ctx2.fillStyle = photo.color;
+    ctx2.fill();
+    
+    // Label
+    ctx2.fillStyle = '#fff';
+    ctx2.font = '11px monospace';
+    ctx2.textAlign = 'center';
+    ctx2.fillText(`${closest.system} SV${closest.prn}`, 140, 160);
+  } else {
+    selectedSatellite = null;
+    document.getElementById('satellite-info').style.display = 'none';
+    document.getElementById('sat-photo').style.display = 'none';
+  }
+});
+
+// === Controls ===
+document.getElementById('btn-pause').addEventListener('click', function() {
+  paused = !paused;
+  this.textContent = paused ? '▶ Play' : '⏸ Pause';
+  this.classList.toggle('active', paused);
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  rotation = { x: 0.3, y: 0.5 };
+  zoom = 1;
+  pan = { x: 0, y: 0 };
+  time = 0;
+  phonePosition = { x: 0.3, y: 0.2, z: 0.5 };
+  initSatellites();
+});
+
+document.getElementById('btn-signals').addEventListener('click', function() {
+  showSignals = !showSignals;
+  this.classList.toggle('active', showSignals);
+});
+
+document.getElementById('btn-trilateration').addEventListener('click', function() {
+  showTrilateration = !showTrilateration;
+  this.classList.toggle('active', showTrilateration);
+  document.getElementById('trilateration').style.display = showTrilateration ? 'block' : 'none';
+});
+
+document.getElementById('btn-almanac').addEventListener('click', function() {
+  showAlmanac = !showAlmanac;
+  this.classList.toggle('active', showAlmanac);
+  if (showAlmanac) {
+    alert('GNSS Almanac:\n\n' + satellites.map(s => `${s.system} SV${s.prn}: orbit=${s.orbit.toFixed(2)}, inc=${s.inclination.toFixed(2)}, speed=${s.speed.toFixed(4)}, alt=${s.altitude.toFixed(2)}`).join('\n'));
+  }
+});
+
+// Photo toggle
+document.getElementById('btn-photo').addEventListener('click', function() {
+  const panel = document.getElementById('sat-photo');
+  const visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  this.classList.toggle('active', !visible);
+});
+
+// Table toggle
+document.getElementById('btn-table').addEventListener('click', function() {
+  const table = document.getElementById('sat-table');
+  const visible = table.style.display !== 'none';
+  table.style.display = visible ? 'none' : 'block';
+  this.classList.toggle('active', !visible);
+  
+  if (!visible) {
+    // Populate table
+    const tbody = document.querySelector('#sat-table table');
+    satellites.forEach(sat => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${sat.prn}</td>
+        <td>${sat.system}</td>
+        <td>${sat.orbit.toFixed(2)}</td>
+        <td>${sat.inclination.toFixed(2)}</td>
+        <td>${sat.speed.toFixed(4)}</td>
+        <td>${sat.altitude.toFixed(2)}</td>
+        <td class="${sat.used ? 'used' : ''}">${sat.used ? '✓' : ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } else {
+    // Clear table rows (keep header)
+    const tbody = document.querySelector('#sat-table table');
+    while (tbody.rows.length > 1) tbody.deleteRow(1);
+  }
+});
+
+// GLONASS toggle
+document.getElementById('btn-glonass').addEventListener('click', function() {
+  const glonassSats = satellites.filter(s => s.system === 'GLONASS');
+  glonassSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', glonassSats[0]?.used);
+});
+
+// Galileo toggle
+document.getElementById('btn-galileo').addEventListener('click', function() {
+  const galileoSats = satellites.filter(s => s.system === 'GALILEO');
+  galileoSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', galileoSats[0]?.used);
+});
+
+// BeiDou toggle
+document.getElementById('btn-beidou').addEventListener('click', function() {
+  const beiDouSats = satellites.filter(s => s.system === 'BEIDOU');
+  beiDouSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', beiDouSats[0]?.used);
+});
+
+// NRO toggle
+document.getElementById('btn-nrol').addEventListener('click', function() {
+  const nrolSats = satellites.filter(s => s.system === 'NROL');
+  nrolSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', nrolSats[0]?.used);
+});
+
+// Strela toggle
+document.getElementById('btn-strela').addEventListener('click', function() {
+  const strelaSats = satellites.filter(s => s.system === 'STRELA');
+  strelaSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', strelaSats[0]?.used);
+});
+
+// Yaogan toggle
+document.getElementById('btn-yaogan').addEventListener('click', function() {
+  const yaoganSats = satellites.filter(s => s.system === 'YAOGAN');
+  yaoganSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', yaoganSats[0]?.used);
+});
+
+// GovSat toggle
+document.getElementById('btn-govsat').addEventListener('click', function() {
+  const govSatSats = satellites.filter(s => s.system === 'GOVSAT');
+  govSatSats.forEach(sat => { sat.used = !sat.used; });
+  this.classList.toggle('active', govSatSats[0]?.used);
+});
+
+// === Animation Loop ===
+function animate() {
+  if (!paused) {
+    time += 0.005;
+  }
+  
+  // Clear
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Draw stars
+  ctx.fillStyle = '#fff';
+  for (let i = 0; i < 100; i++) {
+    const x = (i * 137.5) % canvas.width;
+    const y = (i * 97.3) % canvas.height;
+    const brightness = 0.3 + 0.7 * Math.sin(time * 2 + i);
+    ctx.globalAlpha = brightness;
+    ctx.fillRect(x, y, 1, 1);
+  }
+  ctx.globalAlpha = 1;
+  
+  // Draw Earth
+  drawEarth();
+  
+  // Draw satellites
+  drawSatellites();
+  
+  // Draw signals
+  if (showSignals) drawSignals();
+  
+  // Draw phone
+  drawPhone();
+  
+  // Draw trilateration
+  drawTrilateration();
+  
+  // Update visible count
+  const visibleCount = satellites.filter(s => s.visible).length;
+  document.getElementById('visible-count').textContent = visibleCount;
+  document.getElementById('phone-pos').textContent = 
+    `(${phonePosition.x.toFixed(2)}, ${phonePosition.y.toFixed(2)}, ${phonePosition.z.toFixed(2)})`;
+  
+  requestAnimationFrame(animate);
+}
+
+// === Start ===
+initSatellites();
+animate();
+
+// === Service Worker (offline PWA) ===
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
+    console.log('SW registered:', reg.scope);
+  }).catch(function(err) {
+    console.log('SW failed:', err);
+  });
+}
+</script>
+</body>
+</html>
